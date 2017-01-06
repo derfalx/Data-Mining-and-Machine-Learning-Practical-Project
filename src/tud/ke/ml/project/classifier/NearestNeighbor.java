@@ -48,7 +48,19 @@ public class NearestNeighbor extends INearestNeighbor implements Serializable {
 
     @Override
     protected Map<Object, Double> getWeightedVotes(List<Pair<List<Object>, Double>> subset) {
-        throw new NotImplementedException();
+        Map<Object, Double> unweightedVotes = new HashMap<>();
+        //initialize unweightedVotes with all possible class attributes
+        for (Pair<List<Object>, Double> nearestN : subset) {
+            unweightedVotes.put(nearestN.getA().get(this.getClassAttribute()), 0.0D);
+        }
+        //Count the number of each class attribute in the nearestN
+        for (Pair<List<Object>, Double> nearestN : subset) {
+            double count = unweightedVotes.get(nearestN.getA().get(this.getClassAttribute()));
+            //Votes are the sum of the inverted distances
+            count = count + (1/nearestN.getB());
+            unweightedVotes.put(nearestN.getA().get(this.getClassAttribute()), count);
+        }
+        return unweightedVotes;
     }
 
     @Override
