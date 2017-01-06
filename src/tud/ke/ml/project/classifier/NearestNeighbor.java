@@ -63,9 +63,12 @@ public class NearestNeighbor extends INearestNeighbor implements Serializable {
     protected List<Pair<List<Object>, Double>> getNearest(List<Object> data) {
         ArrayList<Pair<List<Object>, Double>> distances = new ArrayList<>();
         for (List<Object> instance : this.model) {
-            distances.add(new Pair<>(instance, this.determineManhattanDistance(instance, data)));
+            if(getMetric() == 0)
+                distances.add(new Pair<>(instance, this.determineManhattanDistance(instance, data)));
+            else
+                distances.add(new Pair<>(instance, this.determineEuclideanDistance(instance, data)));
         }
-        return distances;
+        return distances;  //"Die Liste, die zurückgegeben wird, muss auf die nächsten getkNearest Elemente beschränkt sein." Zur Zeit werden die Distanzen zu allen Elementen zurückgegeben.
     }
 
     @Override
