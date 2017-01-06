@@ -2,6 +2,7 @@ package tud.ke.ml.project.classifier;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -31,7 +32,18 @@ public class NearestNeighbor extends INearestNeighbor implements Serializable {
 
     @Override
     protected Map<Object, Double> getUnweightedVotes(List<Pair<List<Object>, Double>> subset) {
-        throw new NotImplementedException();
+        Map<Object, Double> unweightedVotes = new HashMap<>();
+        //initialize unweightedVotes with all possible class attributes
+        for (Pair<List<Object>, Double> nearestN : subset) {
+            unweightedVotes.put(nearestN.getA().get(this.getClassAttribute()), 0.0D);
+        }
+        //Count the number of each class attribute in the nearestN
+        for (Pair<List<Object>, Double> nearestN : subset) {
+            double count = unweightedVotes.get(nearestN.getA().get(this.getClassAttribute()));
+            count++;
+            unweightedVotes.put(nearestN.getA().get(this.getClassAttribute()), count);
+        }
+        return unweightedVotes;
     }
 
     @Override
@@ -63,7 +75,7 @@ public class NearestNeighbor extends INearestNeighbor implements Serializable {
     protected List<Pair<List<Object>, Double>> getNearest(List<Object> data) {
         ArrayList<Pair<List<Object>, Double>> distances = new ArrayList<>();
         for (List<Object> instance : this.model) {
-            if(getMetric() == 0)
+            if(this.getMetric() == 0)
                 distances.add(new Pair<>(instance, this.determineManhattanDistance(instance, data)));
             else
                 distances.add(new Pair<>(instance, this.determineEuclideanDistance(instance, data)));
