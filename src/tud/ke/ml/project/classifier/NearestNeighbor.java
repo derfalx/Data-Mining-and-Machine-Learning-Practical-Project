@@ -84,18 +84,42 @@ public class NearestNeighbor extends INearestNeighbor implements Serializable {
     @Override
     protected List<Pair<List<Object>, Double>> getNearest(List<Object> data) {
         ArrayList<Pair<List<Object>, Double>> distances = new ArrayList<>();
+        if(isNormalizing()){
+            double[][] translationScaling = this.normalizationScaling();
+            translation = translationScaling[0];
+            scaling = translationScaling[1];
+            scaleTranslat(data);
+        }
+
         for (List<Object> instance : this.model) {
+            if (isNormalizing()) {
+                scaleTranslat(instance);
+            }
+
             if(this.getMetric() == 0)
                 distances.add(new Pair<>(instance, this.determineManhattanDistance(instance, data)));
             else
                 distances.add(new Pair<>(instance, this.determineEuclideanDistance(instance, data)));
         }
-        distances.sort((x, y) -> (int) (x.getB() * 10 - y.getB() * 10));
+        distances.sort((x, y) -> (int) (x.getB() * 1000000000000L - y.getB() * 1000000000000L));
         return distances.subList(0, super.getkNearest());
+    }
+
+    private void scaleTranslat(List<Object> instance){
+        for(int i = 0; i < instance.size(); i++) {
+            Object o = instance.get(i);
+            if (o instanceof Double) {
+                Double d = (Double) o;
+                d -= translation[i];
+                d /= scaling[i];
+                instance.set(i, d);
+            }
+        }
     }
 
     private List<Double> getPlainDistances(List<Object> instance1, List<Object> instance2) {
         List<Double> plainDistances = new ArrayList<>();
+
         for(int i = 0; i < instance1.size(); i++)
         {
             if( i == this.getClassAttribute() )
@@ -105,10 +129,10 @@ public class NearestNeighbor extends INearestNeighbor implements Serializable {
             Object attr2 = instance2.get(i);
 
             if( attr1 instanceof String ){
-                plainDistances.add(i, attr1.equals(attr2) ? 1d : 0d);
+                plainDistances.add(attr1.equals(attr2) ? 0d : 1d);
             }
             else if( attr1 instanceof Double ){
-                plainDistances.add(i, Math.abs((Double)attr1 - (Double)attr2));
+                plainDistances.add(Math.abs((Double)attr1 - (Double)attr2));
             }
         }
 
@@ -129,7 +153,38 @@ public class NearestNeighbor extends INearestNeighbor implements Serializable {
 
     @Override
     protected double[][] normalizationScaling() {
-        throw new NotImplementedException();
+        double[][] translationScalation = new double[2][this.model.get(1).size()];
+        double[][] minMax = new double[2][translationScalation[0].length];
+
+        for(int i = 0; i < minMax[0].length; i++){
+            minMax[0][i] = Double.MAX_VALUE;
+            minMax[1][i] = -Double.MAX_VALUE;
+        }
+
+        for(List<Object> innerList : model){
+            int index = 0;
+            for (Object o : innerList) {
+                if (o instanceof Double) {
+                    double min = minMax[0][index];
+                    double max = minMax[1][index];
+                    Double d = (Double)o;
+                    if(d < min)
+                        minMax[0][index] = d;
+                    if(d > max )
+                        minMax[1][index] = d;
+                }
+                index++;
+            }
+        }
+
+        translationScalation[0] = minMax[0];
+        for (int i = 0; i < minMax[0].length; i++) {
+            translationScalation[1][i] = minMax[1][i] - minMax[0][i];
+            if(translationScalation[1][i] == 0){
+                translationScalation[1][i] = 1;
+            }
+        }
+        return translationScalation;
     }
 
 }
