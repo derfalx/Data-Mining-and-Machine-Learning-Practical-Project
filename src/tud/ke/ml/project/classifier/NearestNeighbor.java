@@ -1,10 +1,7 @@
 package tud.ke.ml.project.classifier;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 import tud.ke.ml.project.util.Pair;
@@ -92,7 +89,8 @@ public class NearestNeighbor extends INearestNeighbor implements Serializable {
             else
                 distances.add(new Pair<>(instance, this.determineEuclideanDistance(instance, data)));
         }
-        return distances;  //"Die Liste, die zurückgegeben wird, muss auf die nächsten getkNearest Elemente beschränkt sein." Zur Zeit werden die Distanzen zu allen Elementen zurückgegeben.
+        distances.sort((x, y) -> (int) (x.getB() * 10 - y.getB() * 10));
+        return distances.subList(0, super.getkNearest());
     }
 
     @Override
