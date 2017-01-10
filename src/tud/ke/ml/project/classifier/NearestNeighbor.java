@@ -2,6 +2,7 @@ package tud.ke.ml.project.classifier;
 
 import java.io.Serializable;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 import tud.ke.ml.project.util.Pair;
@@ -93,14 +94,37 @@ public class NearestNeighbor extends INearestNeighbor implements Serializable {
         return distances.subList(0, super.getkNearest());
     }
 
+    private List<Double> getPlainDistances(List<Object> instance1, List<Object> instance2) {
+        List<Double> plainDistances = new ArrayList<>();
+        for(int i = 0; i < instance1.size(); i++)
+        {
+            if( i == this.getClassAttribute() )
+                continue;
+
+            Object attr1 = instance1.get(i);
+            Object attr2 = instance2.get(i);
+
+            if( attr1 instanceof String ){
+                plainDistances.add(i, attr1.equals(attr2) ? 1d : 0d);
+            }
+            else if( attr1 instanceof Double ){
+                plainDistances.add(i, Math.abs((Double)attr1 - (Double)attr2));
+            }
+        }
+
+        return plainDistances;
+    }
+
     @Override
     protected double determineManhattanDistance(List<Object> instance1, List<Object> instance2) {
-        throw new NotImplementedException();
+        List<Double> plainDinstances = this.getPlainDistances(instance1,instance2);
+        return plainDinstances.stream().mapToDouble(d -> d).sum();
     }
 
     @Override
     protected double determineEuclideanDistance(List<Object> instance1, List<Object> instance2) {
-        throw new NotImplementedException();
+        List<Double> plainDinstances = this.getPlainDistances(instance1,instance2);
+        return Math.sqrt(plainDinstances.stream().mapToDouble(d -> d*d).sum());
     }
 
     @Override
