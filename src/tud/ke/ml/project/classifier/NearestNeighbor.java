@@ -106,7 +106,42 @@ public class NearestNeighbor extends INearestNeighbor implements Serializable {
                 distances.add(new Pair<>(instance, this.determineEuclideanDistance(instance, workingInput)));
         }
         distances.sort((x, y) -> (int) (x.getB() * 1000000000000L - y.getB() * 1000000000000L));
-        return distances.subList(0, super.getkNearest());
+        if (distances.get(getkNearest()-1).getB() != distances.get(getkNearest()).getB())
+            return distances.subList(0, super.getkNearest());
+        else {
+            int upperLimit = getkNearest();
+            int lowerLimit = getkNearest();
+            //get upperLimit
+            while(distances.get(upperLimit).getB().equals(distances.get(upperLimit + 1).getB())) {
+                upperLimit++;
+            }
+            //get lowerLimit
+            while (distances.get(lowerLimit).getB().equals(distances.get(lowerLimit - 1).getB())) {
+                lowerLimit--;
+            }
+
+            int numberOfElements = getkNearest() - lowerLimit;
+            int randNumb = 0;
+            Random random = new Random();
+            HashSet<Integer> index = new HashSet<>();
+            for (int i = 0; i < numberOfElements; i++) {
+                while(index.size() != numberOfElements) {
+                    randNumb = random.nextInt(upperLimit - lowerLimit + 1) + lowerLimit;
+                    if (!index.contains(randNumb))
+                        index.add(randNumb);
+                }
+            }
+
+            ArrayList<Pair<List<Object>, Double>> result = new ArrayList<>();
+            for (int i = 0; i < lowerLimit; i++) {
+                result.add(distances.get(i));
+            }
+            for (Integer i: index) {
+                result.add(distances.get(i));
+            }
+            return result;
+        }
+
     }
 
     private List<List<Object>> deepCopyData(List<List<Object>> toCopy) {
