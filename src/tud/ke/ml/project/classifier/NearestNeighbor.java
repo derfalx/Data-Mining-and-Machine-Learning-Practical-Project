@@ -12,6 +12,8 @@ public class NearestNeighbor extends INearestNeighbor implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private List<List<Object>> model;
+    private Map<Object, Integer> classCountMap;
+
 
     protected double[] scaling;
     protected double[] translation;
@@ -24,7 +26,15 @@ public class NearestNeighbor extends INearestNeighbor implements Serializable {
     @Override
     protected void learnModel(List<List<Object>> data) {
         this.model = data;
-
+        this.classCountMap = new HashMap<>();
+        for (List<Object> innerlist : data) {
+            Object classAttribute = innerlist.get(this.getClassAttribute());
+            Integer count = this.classCountMap.get(classAttribute);
+            if (count == null)
+                this.classCountMap.put(classAttribute, 0);
+            else
+                this.classCountMap.put(classAttribute, ++count);
+        }
     }
 
     @Override
@@ -62,16 +72,26 @@ public class NearestNeighbor extends INearestNeighbor implements Serializable {
 
     @Override
     protected Object getWinner(Map<Object, Double> votes) {
-        double max = Double.MIN_VALUE;
+        double max = -Double.MAX_VALUE;
+        List<Object> maxClasses = new ArrayList<>();
         for (Double d : votes.values()) {
             if (max < d)
                 max = d;
         }
         for (Object okey : votes.keySet()) {
             if (votes.get(okey) == max)
-                return okey;
+                maxClasses.add(okey);
         }
-        return null;
+
+        max = -Double.MAX_VALUE;
+        Object chosenOne = null;
+        for (Object o : maxClasses) {
+            if (this.classCountMap.get(o) > max) {
+                max = this.classCountMap.get(o);
+                chosenOne = o;
+            }
+        }
+        return chosenOne;
     }
 
     @Override
@@ -106,22 +126,22 @@ public class NearestNeighbor extends INearestNeighbor implements Serializable {
                 distances.add(new Pair<>(instance, this.determineEuclideanDistance(instance, workingInput)));
         }
         distances.sort((x, y) -> (int) (x.getB() * 1000000000000L - y.getB() * 1000000000000L));
-        if (distances.get(getkNearest()-1).getB() != distances.get(getkNearest()).getB())
+        if (!distances.get(getkNearest()-1).getB().equals(distances.get(getkNearest()).getB()))
             return distances.subList(0, super.getkNearest());
         else {
             int upperLimit = getkNearest();
             int lowerLimit = getkNearest();
             //get upperLimit
-            while(distances.get(upperLimit).getB().equals(distances.get(upperLimit + 1).getB())) {
+            while(upperLimit < distances.size() - 1 && distances.get(upperLimit).getB().equals(distances.get(upperLimit + 1).getB())) {
                 upperLimit++;
             }
             //get lowerLimit
-            while (distances.get(lowerLimit).getB().equals(distances.get(lowerLimit - 1).getB())) {
+            while ( lowerLimit > 1 && distances.get(lowerLimit).getB().equals(distances.get(lowerLimit - 1 ).getB())) {
                 lowerLimit--;
             }
 
             int numberOfElements = getkNearest() - lowerLimit;
-            int randNumb = 0;
+            int randNumb;
             Random random = new Random();
             HashSet<Integer> index = new HashSet<>();
             for (int i = 0; i < numberOfElements; i++) {
@@ -156,9 +176,9 @@ public class NearestNeighbor extends INearestNeighbor implements Serializable {
         List<Object> data = new ArrayList<>();
         for (Object o : toCopy) {
             if (o instanceof String) {
-                data.add(new String((String) o));
+                data.add(o);
             } else if (o instanceof Double) {
-                data.add(new Double((Double) o));
+                data.add(o);
             }
         }
         return data;
